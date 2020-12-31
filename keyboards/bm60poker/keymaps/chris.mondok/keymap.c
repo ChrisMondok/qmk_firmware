@@ -17,6 +17,8 @@
 #include QMK_KEYBOARD_H
 #include "rgb_matrix.h"
 #include "lib/lib8tion/lib8tion.h"
+#include "keymap.h"
+#include "rgb_matrix_util.c"
 
 #define RGB_DISABLE_WHEN_USB_SUSPENDED true
 
@@ -79,37 +81,37 @@ void suspend_wakeup_init_user(void) {
     rgb_matrix_set_suspend_state(false);
 }
 
-void rgb_matrix_get_keypos(int index, keypos_t *keypos) {
-  if(index < 14) {
-    keypos->row = 0;
-    keypos->col = index;
-  } else if(index < 28) {
-    keypos->row = 1;
-    keypos->col = index - 14;
-  } else if(index < 41) {
-    // NO_LED in column 1
-    keypos->row = 2;
-    keypos->col = index == 28 ? 0 : index - 29 + 2;
-  } else if(index < 53) {
-    keypos->row = 3;
-    // NO_LED in column 0 and 12
-    keypos->col = index == 52 ? 13 : index - 41 + 1;
-  } else if(index < 61) {
-    keypos->row = 4;
-    keypos->col = index - 53;
-    // three NO_LED after 55
-    if(index > 55) keypos->col += 3;
-    // two NO_LED after 56
-    if(index > 56) keypos->col += 2;
-    // NO_LED after 58
-    if(index > 58) keypos->col += 1;
+void rgb_matrix_indicators_user(void) {
+  // caps lock → light grave key
+  if(host_keyboard_led_state().caps_lock) {
+    rgb_matrix_set_color(0, 0xFF, 0xFF, 0xFF);
+  }
 
+  // compose → light right alt
+  if(host_keyboard_led_state().compose) {
+    rgb_matrix_set_color(57, 0xFF, 0xFF, 0xFF);
+  }
+
+  if(layer_state_cmp(layer_state, _game)) {
+    // wasd keys in green
+    rgb_matrix_set_color(16, 0x00, rgb_matrix_config.hsv.v, 0x00);
+    rgb_matrix_set_color(29, 0x00, rgb_matrix_config.hsv.v, 0x00);
+    rgb_matrix_set_color(30, 0x00, rgb_matrix_config.hsv.v, 0x00);
+    rgb_matrix_set_color(31, 0x00, rgb_matrix_config.hsv.v, 0x00);
+
+    // exit key in green
+    rgb_matrix_set_color(58, 0x00, rgb_matrix_config.hsv.v, 0x00);
+  } else {
+    colorize_keys_by_keycode();
+  }
+
+  if(layer_state_cmp(layer_state, _lighting)) {
+    show_brightness_on_number_line();
   }
 }
 
 void color_key(int led_index, uint16_t keycode) {
   HSV hsv = rgb_matrix_config.hsv;
-  uint16_t time = scale16by8(g_rgb_timer, rgb_matrix_config.speed / 8);
 
   switch (keycode) {
     case XXXXXXX:
@@ -123,27 +125,28 @@ void color_key(int led_index, uint16_t keycode) {
     case KC_LEFT:
     case KC_DOWN:
     case KC_RIGHT:
-    case RGB_VAI:
-    case RGB_VAD:
     case RGB_MOD:
     case RGB_RMOD:
+    case RGB_HUI:
+    case RGB_HUD:
+    case RGB_SAI:
+    case RGB_SAD:
+    case RGB_VAI:
+    case RGB_VAD:
     case TG(_lighting):
       // white
       rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
       break;
     case KC_PGUP:
     case KC_PGDN:
+    case KC_HOME:
+    case KC_END:
       // cyan
       rgb_matrix_set_color(led_index, 0x00, hsv.v, hsv.v);
       break;
     case KC_PSCR:
-      // magenta
-      rgb_matrix_set_color(led_index, hsv.v, hsv.v, 0x00);
-      break;
-    case KC_HOME:
-    case KC_END:
       // yellow
-      rgb_matrix_set_color(led_index, hsv.v, 0x00, hsv.v);
+      rgb_matrix_set_color(led_index, hsv.v, hsv.v, 0x00);
       break;
     case KC_MPLY:
     case KC_MPRV:
@@ -154,18 +157,6 @@ void color_key(int led_index, uint16_t keycode) {
     case TG(_game):
       // green
       rgb_matrix_set_color(led_index, 0x00, hsv.v, 0x00);
-      break;
-    case RGB_SAI:
-      // pulsing saturation
-      hsv.s = abs8(sin8(time) - 128) * 2;
-      RGB rgb = hsv_to_rgb(hsv);
-      rgb_matrix_set_color(30, rgb.r, rgb.b, rgb.b);
-      break;
-    case RGB_HUI:
-      // rotating hue
-      hsv.h = time % UINT8_MAX;
-      rgb = hsv_to_rgb(hsv);
-      rgb_matrix_set_color(34, rgb.r, rgb.b, rgb.b);
       break;
   }
 }
@@ -180,36 +171,16 @@ void colorize_keys_by_keycode(void) {
   }
 }
 
-void rgb_matrix_indicators_user(void) {
-  // caps lock → light grave key
-  if(host_keyboard_led_state().caps_lock) {
-    rgb_matrix_set_color(0, 0xFF, 0xFF, 0xFF);
-  }
-
-  // compose → light right alt
-  if(host_keyboard_led_state().compose) {
-    rgb_matrix_set_color(57, 0xFF, 0xFF, 0xFF);
-  }
-
-  // gaming layer
-  if(layer_state_cmp(layer_state, _game)) {
-    // wasd keys in green
-    rgb_matrix_set_color(16, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(29, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(30, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(31, 0x00, rgb_matrix_config.hsv.v, 0x00);
-
-    // exit key in green
-    rgb_matrix_set_color(58, 0x00, rgb_matrix_config.hsv.v, 0x00);
+void show_brightness_on_number_line() {
+  uint8_t threshold;
+  if(rgb_matrix_config.hsv.v > 0) {
+    threshold = blend8(0, 10, rgb_matrix_config.hsv.v);
   } else {
-    colorize_keys_by_keycode();
+    // out of range so that no keys light up
+    threshold = 255;
   }
-  if(layer_state_cmp(layer_state, _lighting)) {
-    //show brightness on number line
-    uint8_t threshold = blend8(0, 10, rgb_matrix_config.hsv.v);
-    for(int i = 0; i < 10; i++) {
-      uint8_t v = i <= threshold ? 0xFF : 0x00;
-      rgb_matrix_set_color(i+1, v, v, v);
-    }
+  for(int i = 0; i < 10; i++) {
+    uint8_t v = i == threshold ? 0xFF : 0x00;
+    rgb_matrix_set_color(i+1, v, v, v);
   }
 }
