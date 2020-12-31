@@ -21,6 +21,7 @@
 #include "rgb_matrix_util.c"
 
 #define RGB_DISABLE_WHEN_USB_SUSPENDED true
+#define KC_COMPOSE KC_RGUI
 
 enum layers {
   _querty,
@@ -39,7 +40,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,      KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_LBRC, KC_RBRC, KC_BSLS,
         LT(1,KC_ESC),   KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, KC_ENT,
         KC_LSFT,            KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
-        KC_LCTL,   KC_LGUI,   KC_LALT,                       KC_SPC,                              KC_RALT,   KC_RGUI,   KC_APP,   KC_RCTL
+        KC_LCTL,   KC_LGUI,   KC_LALT,                       KC_SPC,                              KC_RALT,   KC_COMPOSE,   KC_APP,   KC_RCTL
     ),
     [_fn] = LAYOUT_60_ansi(
         KC_CAPS,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  KC_DEL,
@@ -82,15 +83,6 @@ void suspend_wakeup_init_user(void) {
 }
 
 void rgb_matrix_indicators_user(void) {
-  // caps lock → light grave key
-  if(host_keyboard_led_state().caps_lock) {
-    rgb_matrix_set_color(0, 0xFF, 0xFF, 0xFF);
-  }
-
-  // compose → light right alt
-  if(host_keyboard_led_state().compose) {
-    rgb_matrix_set_color(57, 0xFF, 0xFF, 0xFF);
-  }
 
   if(layer_state_cmp(layer_state, _game)) {
     // wasd keys in green
@@ -120,7 +112,7 @@ void color_key(int led_index, uint16_t keycode) {
       if(!layer_state_cmp(layer_state, _lighting)) {
         rgb_matrix_set_color(led_index, 0x00, 0x00, 0x00);
       }
-      break;
+      return;
     case KC_UP:
     case KC_LEFT:
     case KC_DOWN:
@@ -133,31 +125,49 @@ void color_key(int led_index, uint16_t keycode) {
     case RGB_SAD:
     case RGB_VAI:
     case RGB_VAD:
-    case TG(_lighting):
       // white
       rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
-      break;
+      return;
     case KC_PGUP:
     case KC_PGDN:
     case KC_HOME:
     case KC_END:
-      // cyan
-      rgb_matrix_set_color(led_index, 0x00, hsv.v, hsv.v);
-      break;
+      // blue
+      rgb_matrix_set_color(led_index, 0x00, 0x00, hsv.v);
+      return;
     case KC_PSCR:
       // yellow
       rgb_matrix_set_color(led_index, hsv.v, hsv.v, 0x00);
-      break;
+      return;
     case KC_MPLY:
     case KC_MPRV:
     case KC_MNXT:
       // red
       rgb_matrix_set_color(led_index, hsv.v, 0x00, 0x00);
-      break;
+      return;
     case TG(_game):
       // green
       rgb_matrix_set_color(led_index, 0x00, hsv.v, 0x00);
-      break;
+      return;
+    case KC_COMPOSE:
+      if(host_keyboard_led_state().compose) {
+        rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
+      }
+      return;
+    case KC_CAPS:
+    case KC_GRV:
+      if(host_keyboard_led_state().caps_lock) {
+        rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
+      }
+      return;
+    default:
+      // f keys are non-contiguous!
+      if((keycode >= KC_F1 && keycode <= KC_F12) || (keycode >= KC_F13 && keycode <= KC_F24)) {
+        rgb_matrix_set_color(led_index, hsv.v, 0x00, hsv.v);
+      } else if(keycode >= QK_TOGGLE_LAYER && keycode < QK_TOGGLE_LAYER_MAX) {
+        rgb_matrix_set_color(led_index, 0x00, hsv.v, hsv.v);
+      }
+      return;
   }
 }
 
