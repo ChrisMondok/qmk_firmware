@@ -90,6 +90,8 @@ void rgb_matrix_indicators_user(void) {
   }
 
   if(layer_state_cmp(layer_state, _fn)) {
+    rgb_matrix_set_color_all(0x00, 0x00, 0x00);
+
     // arrow cluster in white
     rgb_matrix_set_color(22, hsv.v, hsv.v, hsv.v);
     rgb_matrix_set_color(35, hsv.v, hsv.v, hsv.v);
