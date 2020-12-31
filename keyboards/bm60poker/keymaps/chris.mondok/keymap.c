@@ -84,9 +84,14 @@ void rgb_matrix_indicators_user(void) {
   HSV hsv = rgb_matrix_config.hsv;
   uint16_t time = scale16by8(g_rgb_timer, rgb_matrix_config.speed / 8);
 
-  // caps lock in red
+  // caps lock → light grave key
   if(host_keyboard_led_state().caps_lock) {
-    rgb_matrix_set_color(0, 0xFF, 0x00, 0x00);
+    rgb_matrix_set_color(0, 0xFF, 0xFF, 0xFF);
+  }
+
+  // compose → light right alt
+  if(host_keyboard_led_state().compose) {
+    rgb_matrix_set_color(57, 0xFF, 0xFF, 0xFF);
   }
 
   if(layer_state_cmp(layer_state, _fn)) {
