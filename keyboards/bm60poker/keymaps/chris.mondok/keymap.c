@@ -43,7 +43,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_CAPS,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  KC_DEL,
         XXXXXXX,     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_PGUP, KC_UP, KC_PGDN, KC_PSCR, XXXXXXX, XXXXXXX, KC_INS,
         KC_TRNS,       KC_MPRV, KC_MPLY, KC_MNXT, XXXXXXX, TG(_game), KC_HOME, KC_LEFT, KC_DOWN, KC_RGHT, KC_END, XXXXXXX, XXXXXXX,
-        XXXXXXX,            RGB_TOG, RGB_MOD, RGB_HUI, RGB_HUD, RGB_SAI, RGB_SAD, RGB_VAI, RGB_VAD, XXXXXXX, XXXXXXX, XXXXXXX,
+        XXXXXXX,            XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
         XXXXXXX,   XXXXXXX,   XXXXXXX,                      XXXXXXX,                              XXXXXXX,   TG(_lighting),   XXXXXXX,   XXXXXXX
     ),
     [_game] = LAYOUT_60_ansi(
@@ -79,11 +79,108 @@ void suspend_wakeup_init_user(void) {
     rgb_matrix_set_suspend_state(false);
 }
 
-void rgb_matrix_indicators_user(void) {
-  if(!rgb_matrix_config.enable) return;
+void rgb_matrix_get_keypos(int index, keypos_t *keypos) {
+  if(index < 14) {
+    keypos->row = 0;
+    keypos->col = index;
+  } else if(index < 28) {
+    keypos->row = 1;
+    keypos->col = index - 14;
+  } else if(index < 41) {
+    // NO_LED in column 1
+    keypos->row = 2;
+    keypos->col = index == 28 ? 0 : index - 29 + 2;
+  } else if(index < 53) {
+    keypos->row = 3;
+    // NO_LED in column 0 and 12
+    keypos->col = index == 52 ? 13 : index - 41 + 1;
+  } else if(index < 61) {
+    keypos->row = 4;
+    keypos->col = index - 53;
+    // three NO_LED after 55
+    if(index > 55) keypos->col += 3;
+    // two NO_LED after 56
+    if(index > 56) keypos->col += 2;
+    // NO_LED after 58
+    if(index > 58) keypos->col += 1;
+
+  }
+}
+
+void color_key(int led_index, uint16_t keycode) {
   HSV hsv = rgb_matrix_config.hsv;
   uint16_t time = scale16by8(g_rgb_timer, rgb_matrix_config.speed / 8);
 
+  switch (keycode) {
+    case XXXXXXX:
+      // black
+      // don't turn off keys on the lighting layer.
+      if(!layer_state_cmp(layer_state, _lighting)) {
+        rgb_matrix_set_color(led_index, 0x00, 0x00, 0x00);
+      }
+      break;
+    case KC_UP:
+    case KC_LEFT:
+    case KC_DOWN:
+    case KC_RIGHT:
+    case RGB_VAI:
+    case RGB_VAD:
+    case RGB_MOD:
+    case RGB_RMOD:
+    case TG(_lighting):
+      // white
+      rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
+      break;
+    case KC_PGUP:
+    case KC_PGDN:
+      // cyan
+      rgb_matrix_set_color(led_index, 0x00, hsv.v, hsv.v);
+      break;
+    case KC_PSCR:
+      // magenta
+      rgb_matrix_set_color(led_index, hsv.v, hsv.v, 0x00);
+      break;
+    case KC_HOME:
+    case KC_END:
+      // yellow
+      rgb_matrix_set_color(led_index, hsv.v, 0x00, hsv.v);
+      break;
+    case KC_MPLY:
+    case KC_MPRV:
+    case KC_MNXT:
+      // red
+      rgb_matrix_set_color(led_index, hsv.v, 0x00, 0x00);
+      break;
+    case TG(_game):
+      // green
+      rgb_matrix_set_color(led_index, 0x00, hsv.v, 0x00);
+      break;
+    case RGB_SAI:
+      // pulsing saturation
+      hsv.s = abs8(sin8(time) - 128) * 2;
+      RGB rgb = hsv_to_rgb(hsv);
+      rgb_matrix_set_color(30, rgb.r, rgb.b, rgb.b);
+      break;
+    case RGB_HUI:
+      // rotating hue
+      hsv.h = time % UINT8_MAX;
+      rgb = hsv_to_rgb(hsv);
+      rgb_matrix_set_color(34, rgb.r, rgb.b, rgb.b);
+      break;
+  }
+}
+
+void colorize_keys_by_keycode(void) {
+  uint8_t layer = get_highest_layer(layer_state);
+  keypos_t key;
+  for(int i = 0; i < 60; i++) {
+    rgb_matrix_get_keypos(i, &key);
+    uint16_t keycode = keymap_key_to_keycode(layer, key);
+    color_key(i, keycode);
+  }
+}
+
+void rgb_matrix_indicators_user(void) {
   // caps lock → light grave key
   if(host_keyboard_led_state().caps_lock) {
     rgb_matrix_set_color(0, 0xFF, 0xFF, 0xFF);
@@ -94,72 +191,22 @@ void rgb_matrix_indicators_user(void) {
     rgb_matrix_set_color(57, 0xFF, 0xFF, 0xFF);
   }
 
-  if(layer_state_cmp(layer_state, _fn)) {
-    rgb_matrix_set_color_all(0x00, 0x00, 0x00);
-
-    // arrow cluster in white
-    rgb_matrix_set_color(22, hsv.v, hsv.v, hsv.v);
-    rgb_matrix_set_color(35, hsv.v, hsv.v, hsv.v);
-    rgb_matrix_set_color(36, hsv.v, hsv.v, hsv.v);
-    rgb_matrix_set_color(37, hsv.v, hsv.v, hsv.v);
-
-    // page up / down in cyan
-    rgb_matrix_set_color(21, 0x00, hsv.v, hsv.v);
-    rgb_matrix_set_color(23, 0x00, hsv.v, hsv.v);
-
-    // print screen in magenta
-    rgb_matrix_set_color(24, hsv.v, hsv.v, 0x00);
-
-    // home and end in yellow
-    rgb_matrix_set_color(34, hsv.v, 0x00, hsv.v);
-    rgb_matrix_set_color(38, hsv.v, 0x00, hsv.v);
-
-    // media keys in red
-    rgb_matrix_set_color(29, hsv.v, 0x00, 0x00);
-    rgb_matrix_set_color(30, hsv.v, 0x00, 0x00);
-    rgb_matrix_set_color(31, hsv.v, 0x00, 0x00);
-
-    // g key (game layer) in green
-    rgb_matrix_set_color(33, 0x00, hsv.v, 0x00);
-
-    // rgui key (lighting layer) in white
-    rgb_matrix_set_color(58, hsv.v, hsv.v, hsv.v);
-  }
-
+  // gaming layer
   if(layer_state_cmp(layer_state, _game)) {
     // wasd keys in green
-    rgb_matrix_set_color(16, 0x00, hsv.v, 0x00);
-    rgb_matrix_set_color(29, 0x00, hsv.v, 0x00);
-    rgb_matrix_set_color(30, 0x00, hsv.v, 0x00);
-    rgb_matrix_set_color(31, 0x00, hsv.v, 0x00);
+    rgb_matrix_set_color(16, 0x00, rgb_matrix_config.hsv.v, 0x00);
+    rgb_matrix_set_color(29, 0x00, rgb_matrix_config.hsv.v, 0x00);
+    rgb_matrix_set_color(30, 0x00, rgb_matrix_config.hsv.v, 0x00);
+    rgb_matrix_set_color(31, 0x00, rgb_matrix_config.hsv.v, 0x00);
 
     // exit key in green
-    rgb_matrix_set_color(58, 0x00, hsv.v, 0x00);
+    rgb_matrix_set_color(58, 0x00, rgb_matrix_config.hsv.v, 0x00);
+  } else {
+    colorize_keys_by_keycode();
   }
-
   if(layer_state_cmp(layer_state, _lighting)) {
-    // increase / decrease buttons
-    rgb_matrix_set_color(11, hsv.v, hsv.v, hsv.v);
-    rgb_matrix_set_color(12, hsv.v, hsv.v, hsv.v);
-
-    // saturation key
-    HSV hsv = rgb_matrix_config.hsv;
-    hsv.s = abs8(sin8(time) - 128) * 2;
-    RGB rgb = hsv_to_rgb(hsv);
-    rgb_matrix_set_color(30, rgb.r, rgb.b, rgb.b);
-
-    // hue key
-    hsv = rgb_matrix_config.hsv;
-    hsv.h = time % UINT8_MAX;
-    rgb = hsv_to_rgb(hsv);
-    rgb_matrix_set_color(34, rgb.r, rgb.b, rgb.b);
-
-    // next / prev keys
-    rgb_matrix_set_color(49, 0xFF, 0xFF, 0xFF);
-    rgb_matrix_set_color(50, 0xFF, 0xFF, 0xFF);
-
     //show brightness on number line
-    uint8_t threshold = blend8(0, 10, hsv.v);
+    uint8_t threshold = blend8(0, 10, rgb_matrix_config.hsv.v);
     for(int i = 0; i < 10; i++) {
       uint8_t v = i <= threshold ? 0xFF : 0x00;
       rgb_matrix_set_color(i+1, v, v, v);
