@@ -75,15 +75,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 void suspend_power_down_user(void) {
-    rgb_matrix_set_suspend_state(true);
-}
-
-void suspend_wakeup_init_user(void) {
-    rgb_matrix_set_suspend_state(false);
+  rgb_matrix_set_color_all(0x00, 0x00, 0x00);
+  RGB rgb = hsv_to_rgb(rgb_matrix_config.hsv);
+  rgb_matrix_set_color(56, rgb.r, rgb.g, rgb.b);
 }
 
 void rgb_matrix_indicators_user(void) {
-
   if(layer_state_cmp(layer_state, _game)) {
     // wasd keys in green
     rgb_matrix_set_color(16, 0x00, rgb_matrix_config.hsv.v, 0x00);
