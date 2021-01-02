@@ -105,9 +105,22 @@ void rgb_matrix_indicators_user(void) {
   }
 }
 
-void color_key(int led_index, uint16_t keycode) {
-  HSV hsv = rgb_matrix_config.hsv;
+void rgb_matrix_indicate_white(int led_index) {
+  uint8_t v = rgb_matrix_config.hsv.v;
+  if(v < 0x80) v = 0x80;
+  rgb_matrix_set_color(led_index, v, v, v);
+}
 
+void rgb_matrix_indicate_hue(int led_index, uint8_t hue) {
+  HSV hsv = rgb_matrix_config.hsv;
+  hsv.h = hue;
+  hsv.s = 0xFF;
+  if(hsv.v < 0x80) hsv.v = 0x80;
+  RGB rgb = hsv_to_rgb(hsv);
+  rgb_matrix_set_color(led_index, rgb.r, rgb.g, rgb.b);
+}
+
+void color_key(int led_index, uint16_t keycode) {
   switch (keycode) {
     case XXXXXXX:
       // black
@@ -129,47 +142,47 @@ void color_key(int led_index, uint16_t keycode) {
     case RGB_VAI:
     case RGB_VAD:
       // white
-      rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
+      rgb_matrix_indicate_white(led_index);
       return;
     case KC_PGUP:
     case KC_PGDN:
     case KC_HOME:
     case KC_END:
       // blue
-      rgb_matrix_set_color(led_index, 0x00, 0x00, hsv.v);
+      rgb_matrix_indicate_hue(led_index, 0xAA);
       return;
     case KC_PSCR:
     case KC_SLEP:
       // yellow
-      rgb_matrix_set_color(led_index, hsv.v, hsv.v, 0x00);
+      rgb_matrix_indicate_hue(led_index, 0x30);
       return;
     case KC_MPLY:
     case KC_MPRV:
     case KC_MNXT:
       // red
-      rgb_matrix_set_color(led_index, hsv.v, 0x00, 0x00);
+      rgb_matrix_indicate_hue(led_index, 0x00);
       return;
     case TG(_game):
       // green
-      rgb_matrix_set_color(led_index, 0x00, hsv.v, 0x00);
+      rgb_matrix_indicate_hue(led_index, 0x55);
       return;
     case KC_COMPOSE:
       if(host_keyboard_led_state().compose) {
-        rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
+        rgb_matrix_indicate_white(led_index);
       }
       return;
     case KC_CAPS:
     case KC_GRV:
       if(host_keyboard_led_state().caps_lock) {
-        rgb_matrix_set_color(led_index, hsv.v, hsv.v, hsv.v);
+        rgb_matrix_indicate_white(led_index);
       }
       return;
     default:
       // f keys are non-contiguous!
       if((keycode >= KC_F1 && keycode <= KC_F12) || (keycode >= KC_F13 && keycode <= KC_F24)) {
-        rgb_matrix_set_color(led_index, hsv.v, 0x00, hsv.v);
+        rgb_matrix_indicate_hue(led_index, 0xD5);
       } else if(keycode >= QK_TOGGLE_LAYER && keycode < QK_TOGGLE_LAYER_MAX) {
-        rgb_matrix_set_color(led_index, 0x00, hsv.v, hsv.v);
+        rgb_matrix_indicate_hue(led_index, 0x80);
       }
       return;
   }
