@@ -177,7 +177,7 @@ void color_key(int led_index, uint16_t keycode) {
 void colorize_keys_by_keycode(void) {
   uint8_t layer = get_highest_layer(layer_state);
   keypos_t key;
-  for(int i = 0; i < 60; i++) {
+  for(int i = 0; i < 61; i++) {
     rgb_matrix_get_keypos(i, &key);
     uint16_t keycode = keymap_key_to_keycode(layer, key);
     color_key(i, keycode);
