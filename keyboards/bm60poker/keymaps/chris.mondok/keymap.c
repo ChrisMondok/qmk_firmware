@@ -15,9 +15,12 @@
  */
 
 #include QMK_KEYBOARD_H
+#include <string.h>
 #include "rgb_matrix.h"
 #include "lib/lib8tion/lib8tion.h"
 #include "keymap.h"
+#include "raw_hid.h"
+#include "led_hid.c"
 
 #define RGB_DISABLE_WHEN_USB_SUSPENDED true
 #define KC_COMPOSE KC_RALT
@@ -86,6 +89,9 @@ void suspend_power_down_user(void) {
   rgb_matrix_set_color(56, rgb.r, rgb.g, rgb.b);
 }
 
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+  raw_hid_receive_led_groups(data, length);
+}
 
 void rgb_matrix_indicate_white(int led_index) {
   uint8_t v = rgb_matrix_config.hsv.v;
@@ -112,6 +118,8 @@ void rgb_matrix_indicators_user(void) {
   } else {
     colorize_keys_by_keycode();
   }
+
+  rgb_matrix_indicate_groups();
 
   if(layer_state_cmp(layer_state, _lighting)) {
     show_brightness_on_number_line();
