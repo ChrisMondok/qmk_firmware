@@ -74,6 +74,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   return true;
 }
 
+void keyboard_post_init_user(void) {
+  rgb_matrix_enable_noeeprom();
+
+  // disable underglow, the case is opaque.
+  rgb_matrix_set_flags(LED_FLAG_ALL ^ LED_FLAG_UNDERGLOW);
+}
+
 void suspend_power_down_user(void) {
   rgb_matrix_set_color_all(0x00, 0x00, 0x00);
   RGB rgb = hsv_to_rgb(rgb_matrix_config.hsv);
