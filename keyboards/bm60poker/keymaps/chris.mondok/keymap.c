@@ -18,7 +18,6 @@
 #include "rgb_matrix.h"
 #include "lib/lib8tion/lib8tion.h"
 #include "keymap.h"
-#include "rgb_matrix_util.c"
 
 #define RGB_DISABLE_WHEN_USB_SUSPENDED true
 #define KC_COMPOSE KC_RALT
@@ -198,10 +197,17 @@ void color_key(int led_index, uint16_t keycode) {
 void colorize_keys_by_keycode(void) {
   uint8_t layer = get_highest_layer(layer_state);
   keypos_t key;
-  for(int i = 0; i < 61; i++) {
-    rgb_matrix_get_keypos(i, &key);
-    uint16_t keycode = keymap_key_to_keycode(layer, key);
-    color_key(i, keycode);
+  uint8_t led_i;
+  for(key.row = 0; key.row < MATRIX_ROWS; key.row++) {
+    for(key.col = 0; key.col < MATRIX_COLS; key.col++) {
+      uint16_t keycode = keymap_key_to_keycode(layer, key);
+      if(keycode == KC_NO) continue;
+      // BUG: this will misbehave if there is ever more than one LED for the given row / column.
+      // This *appears* safe for the bm60poker.
+      int count = rgb_matrix_map_row_column_to_led(key.row, key.col, &led_i);
+      if(!count) continue;
+      color_key(led_i, keycode);
+    }
   }
 }
 
