@@ -86,30 +86,6 @@ void suspend_power_down_user(void) {
   rgb_matrix_set_color(56, rgb.r, rgb.g, rgb.b);
 }
 
-void rgb_matrix_indicators_user(void) {
-  if(layer_state_cmp(layer_state, _game)) {
-    // wasd keys in green
-    rgb_matrix_set_color(16, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(29, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(30, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(31, 0x00, rgb_matrix_config.hsv.v, 0x00);
-
-    // arrow keys in green
-    rgb_matrix_set_color(52, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(58, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(59, 0x00, rgb_matrix_config.hsv.v, 0x00);
-    rgb_matrix_set_color(60, 0x00, rgb_matrix_config.hsv.v, 0x00);
-
-    // exit key in cyan
-    rgb_matrix_set_color(57, 0x00, rgb_matrix_config.hsv.v, rgb_matrix_config.hsv.v);
-  } else {
-    colorize_keys_by_keycode();
-  }
-
-  if(layer_state_cmp(layer_state, _lighting)) {
-    show_brightness_on_number_line();
-  }
-}
 
 void rgb_matrix_indicate_white(int led_index) {
   uint8_t v = rgb_matrix_config.hsv.v;
@@ -124,6 +100,22 @@ void rgb_matrix_indicate_hue(int led_index, uint8_t hue) {
   if(hsv.v < 0x80) hsv.v = 0x80;
   RGB rgb = hsv_to_rgb(hsv);
   rgb_matrix_set_color(led_index, rgb.r, rgb.g, rgb.b);
+}
+
+void rgb_matrix_indicators_user(void) {
+  if(layer_state_cmp(layer_state, _game)) {
+    // wasd keys in green
+    rgb_matrix_indicate_hue(16, 0x55);
+    rgb_matrix_indicate_hue(29, 0x55);
+    rgb_matrix_indicate_hue(30, 0x55);
+    rgb_matrix_indicate_hue(31, 0x55);
+  } else {
+    colorize_keys_by_keycode();
+  }
+
+  if(layer_state_cmp(layer_state, _lighting)) {
+    show_brightness_on_number_line();
+  }
 }
 
 void color_key(int led_index, uint16_t keycode) {
