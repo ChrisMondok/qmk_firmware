@@ -30,10 +30,17 @@ enum layers {
   _fn,
   _game,
   _lighting,
+  _num_layers,
 };
 
 enum custom_codes {
   _rgb_plain = SAFE_RANGE
+};
+
+enum hid_commands {
+  _reset_led_groups = 0x00,
+  _set_led_group,
+  _set_layer,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -90,7 +97,23 @@ void suspend_power_down_user(void) {
 }
 
 void raw_hid_receive(uint8_t *data, uint8_t length) {
-  raw_hid_receive_led_groups(data, length);
+  switch(*data) {
+    case _reset_led_groups:
+      reset_led_groups();
+      break;
+    case _set_led_group:
+      //format: [cmdNumber, groupNumber, …group]
+      set_led_group(data[1], (LedGroup *) (data+2));
+      break;
+    case _set_layer:
+      if(data[1] < _num_layers) {
+        layer_move(data[1]);
+        break;
+      }
+    default:
+      raw_hid_send(data, length);
+      break;
+  }
 }
 
 void rgb_matrix_indicate_white(int led_index) {
