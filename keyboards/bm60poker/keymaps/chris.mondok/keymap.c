@@ -96,6 +96,17 @@ void suspend_power_down_user(void) {
   rgb_matrix_set_color(56, rgb.r, rgb.g, rgb.b);
 }
 
+static layer_state_t layer_state_old;
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+  // leaving game layer
+  if(!layer_state_cmp(state, _game) && layer_state_cmp(layer_state_old, _game)) {
+    reset_led_groups();
+  }
+  layer_state_old = state;
+  return state;
+}
+
 void raw_hid_receive(uint8_t *data, uint8_t length) {
   switch(*data) {
     case _reset_led_groups:
