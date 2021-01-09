@@ -21,5 +21,5 @@ typedef struct PACKED {
 } LedGroup;
 
 void reset_led_groups(void);
-void set_led_group(uint8_t group_number, LedGroup *group);
+void set_led_group(uint8_t group_number, const LedGroup *group);
 void rgb_matrix_indicate_groups(void);

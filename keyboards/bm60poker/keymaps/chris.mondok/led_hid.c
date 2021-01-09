@@ -10,7 +10,7 @@ void reset_led_groups() {
   memset(&(led_groups[2]), 0, sizeof(LedGroup));
 }
 
-void set_led_group(uint8_t group_number, LedGroup *group) {
+void set_led_group(uint8_t group_number, const LedGroup *group) {
   memcpy(led_groups + group_number, group, 30);
 }
 

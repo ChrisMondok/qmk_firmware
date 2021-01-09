@@ -98,10 +98,21 @@ void suspend_power_down_user(void) {
 
 static layer_state_t layer_state_old;
 
+static const LedGroup gaming_led_group = {
+  0x00,
+  0xFF,
+  0x00,
+  4,
+  { 16, 29, 30, 31 }
+};
+
 layer_state_t layer_state_set_user(layer_state_t state) {
-  // leaving game layer
   if(!layer_state_cmp(state, _game) && layer_state_cmp(layer_state_old, _game)) {
+    // leaving game layer
     reset_led_groups();
+  } else if(layer_state_cmp(state, _game) && !layer_state_cmp(layer_state_old, _game)) {
+    //entering game layer
+    set_led_group(0, &gaming_led_group);
   }
   layer_state_old = state;
   return state;
@@ -143,13 +154,7 @@ void rgb_matrix_indicate_hue(int led_index, uint8_t hue) {
 }
 
 void rgb_matrix_indicators_user(void) {
-  if(layer_state_cmp(layer_state, _game)) {
-    // wasd keys in green
-    rgb_matrix_indicate_hue(16, 0x55);
-    rgb_matrix_indicate_hue(29, 0x55);
-    rgb_matrix_indicate_hue(30, 0x55);
-    rgb_matrix_indicate_hue(31, 0x55);
-  } else {
+  if(!layer_state_cmp(layer_state, _game)) {
     colorize_keys_by_keycode();
   }
 
