@@ -193,7 +193,6 @@ void colorize_keys_by_keycode(void) {
   for(key.row = 0; key.row < MATRIX_ROWS; key.row++) {
     for(key.col = 0; key.col < MATRIX_COLS; key.col++) {
       uint16_t keycode = keymap_key_to_keycode(layer, key);
-      if(keycode == KC_NO) continue;
       // BUG: this will misbehave if there is ever more than one LED for the given row / column.
       // This *appears* safe for the bm60poker.
       int count = rgb_matrix_map_row_column_to_led(key.row, key.col, &led_i);
