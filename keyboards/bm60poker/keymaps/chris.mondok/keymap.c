@@ -98,12 +98,13 @@ void suspend_power_down_user(void) {
 
 static layer_state_t layer_state_old;
 
+const uint64_t wasd = (1LL << 16) | (7LL << 29);
+
 static const LedGroup gaming_led_group = {
   0x00,
   0xFF,
   0x00,
-  4,
-  { 16, 29, 30, 31 }
+  wasd,
 };
 
 layer_state_t layer_state_set_user(layer_state_t state) {
@@ -112,7 +113,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     reset_led_groups();
   } else if(layer_state_cmp(state, _game) && !layer_state_cmp(layer_state_old, _game)) {
     //entering game layer
-    set_led_group(0, &gaming_led_group);
+    set_led_group(1, &gaming_led_group);
   }
   layer_state_old = state;
   return state;
