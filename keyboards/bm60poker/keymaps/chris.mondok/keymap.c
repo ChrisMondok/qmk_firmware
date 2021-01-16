@@ -74,8 +74,42 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 };
 
+bool lshift = false;
+bool rshift = false;
+bool shift_lock = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch(keycode) {
+    case KC_SPC:
+      if(shift_lock) {
+        if(record->event.pressed) register_code(KC_MINS);
+        else unregister_code(KC_MINS);
+        return false;
+      }
+      return true;
+    case KC_LSFT:
+    case KC_RSFT:
+      if(record->event.pressed) {
+        // exit shift lock when pressing either shift
+        if(shift_lock) {
+          unregister_code(KC_RSFT);
+          shift_lock = false;
+          // don't process pressing KC_RSFT, we discarded its previous release
+          return keycode == KC_LSFT;
+        } else {
+          lshift |= keycode == KC_LSFT;
+          rshift |= keycode == KC_RSFT;
+          shift_lock = lshift & rshift;
+          return true;
+        }
+      } else {
+        lshift &= keycode != KC_LSFT;
+        rshift &= keycode != KC_RSFT;
+
+        // keep right shift held when shift lock is on
+        return !shift_lock || keycode != KC_RSFT;
+      }
+      return true;
     case _rgb_plain:
       rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
       return false;
@@ -196,6 +230,11 @@ void color_key(int led_index, uint16_t keycode) {
     case KC_END:
       // blue
       rgb_matrix_indicate_hue(led_index, 0xAA);
+      return;
+    case KC_LSFT:
+    case KC_RSFT:
+    case KC_SPC:
+      if(shift_lock) rgb_matrix_indicate_white(led_index);
       return;
     case KC_PSCR:
     case KC_SLEP:
