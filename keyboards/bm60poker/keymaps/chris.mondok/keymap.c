@@ -263,10 +263,7 @@ void color_key(int led_index, uint16_t keycode) {
       }
       return;
     default:
-      // f keys are non-contiguous!
-      if((keycode >= KC_F1 && keycode <= KC_F12) || (keycode >= KC_F13 && keycode <= KC_F24)) {
-        rgb_matrix_indicate_hue(led_index, 0xD5);
-      } else if(keycode >= QK_TOGGLE_LAYER && keycode < QK_TOGGLE_LAYER_MAX) {
+      if(keycode >= QK_TOGGLE_LAYER && keycode < QK_TOGGLE_LAYER_MAX) {
         rgb_matrix_indicate_hue(led_index, 0x80);
       }
       return;
