@@ -1,13 +1,11 @@
 #include "led_hid.h"
 
-#define NUM_LED_GROUPS 3
-
 static LedGroup led_groups[NUM_LED_GROUPS];
 
 void reset_led_groups() {
-  memset(&(led_groups[0]), 0, sizeof(LedGroup));
-  memset(&(led_groups[1]), 0, sizeof(LedGroup));
-  memset(&(led_groups[2]), 0, sizeof(LedGroup));
+  for(int i = 0; i < NUM_LED_GROUPS; i++) {
+    memset(&(led_groups[i]), 0, sizeof(LedGroup));
+  }
 }
 
 void set_led_group(uint8_t group_number, const LedGroup *group) {

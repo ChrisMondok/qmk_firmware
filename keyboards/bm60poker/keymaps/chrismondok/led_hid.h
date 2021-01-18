@@ -1,3 +1,5 @@
+#define NUM_LED_GROUPS 3
+
 typedef struct PACKED {
   uint8_t red;
   uint8_t green;
