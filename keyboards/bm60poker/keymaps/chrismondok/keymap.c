@@ -53,7 +53,7 @@ const uint16_t PROGMEM keymaps[LAYER_MAX][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LCTL,   KC_LGUI,   KC_LALT,                       KC_SPC,                              KC_RGUI,  KC_COMPOSE, KC_APP,  KC_RCTL
     ),
     [LAYER_FN] = LAYOUT_60_ansi(
-        KC_CAPS,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  KC_DEL,
+        XXXXXXX,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,  KC_DEL,
         XXXXXXX,      KC_F13,  KC_F14,  KC_F15,  KC_F16,  KC_F17, XXXXXXX, KC_PGUP, KC_UP, KC_PGDN, KC_PSCR, XXXXXXX, XXXXXXX, KC_INS,
         KC_TRNS,       KC_MPRV, KC_MPLY, KC_MNXT, XXXXXXX, TG(LAYER_GAME), KC_HOME, KC_LEFT, KC_DOWN, KC_RGHT, XXXXXXX, XXXXXXX, XXXXXXX,
         KC_TRNS,            KC_SLEP, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  KC_END, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_TRNS,
@@ -202,7 +202,8 @@ void color_key(int led_index, uint16_t keycode) {
     case KC_LSFT:
     case KC_RSFT:
     case KC_SPC:
-      if(g_shift_lock) rgb_matrix_indicate_white(led_index);
+    case KC_CAPS:
+      if(host_keyboard_led_state().caps_lock) rgb_matrix_indicate_white(led_index);
       return;
     case KC_PSCR:
     case KC_SLEP:
@@ -221,12 +222,6 @@ void color_key(int led_index, uint16_t keycode) {
       return;
     case KC_COMPOSE:
       if(host_keyboard_led_state().compose) {
-        rgb_matrix_indicate_white(led_index);
-      }
-      return;
-    case KC_CAPS:
-    case KC_GRV:
-      if(host_keyboard_led_state().caps_lock) {
         rgb_matrix_indicate_white(led_index);
       }
       return;
