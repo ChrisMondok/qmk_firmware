@@ -80,6 +80,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch(keycode) {
     case KC_CUSTOM_RGB_PLAIN:
       rgb_matrix_mode(RGB_MATRIX_SOLID_COLOR);
+      rgb_matrix_sethsv(0, 0, 0);
       return false;
   }
   return true;
