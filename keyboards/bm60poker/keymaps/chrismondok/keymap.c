@@ -42,6 +42,7 @@ enum hid_commands {
   HID_CMD_RESET_LED_GROUPS = 0x00,
   HID_CMD_SET_LED_GROUP,
   HID_CMD_SET_LAYER,
+  HID_CMD_ALERT,
 };
 
 const uint16_t PROGMEM keymaps[LAYER_MAX][MATRIX_ROWS][MATRIX_COLS] = {
@@ -136,6 +137,9 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
         layer_move(data[1]);
         break;
       }
+    case HID_CMD_ALERT:
+      do_alert(data[1], data[2], data[3]);
+      break;
     default:
       raw_hid_send(data, length);
       break;
@@ -162,11 +166,12 @@ void rgb_matrix_indicators_user(void) {
     colorize_keys_by_keycode();
   }
 
-  rgb_matrix_indicate_groups();
+  rgb_matrix_indicate_hid();
 
   if(layer_state_cmp(layer_state, LAYER_LIGHTING)) {
     show_brightness_on_number_line();
   }
+
 }
 
 void color_key(int led_index, uint16_t keycode) {
