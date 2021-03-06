@@ -1,5 +1,7 @@
 #pragma once
 
+#define PERMISSIVE_HOLD
+
 #define NO_ACTION_ONESHOT
 #define NO_ACTION_MACRO
 #define NO_ACTION_FUNCTION
